@@ -29,18 +29,37 @@ document.addEventListener("DOMContentLoaded", () => {
           <div class="participants-section">
             <h5>Participants:</h5>
             <ul class="participants-list">
-              ${participants.length > 0 ? participants.map(p => `<li>${typeof p === 'string' ? p : (p.email || p.name || 'Unknown')}</li>`).join('') : '<li>No participants yet.</li>'}
+              ${participants.length > 0 ? participants.map(p => {
+                const email = typeof p === 'string' ? p : (p.email || p.name || 'Unknown');
+                return `<li>${email} <button class="delete-btn" data-activity="${name}" data-email="${email}">×</button></li>`;
+              }).join('') : '<li>No participants yet.</li>'}
             </ul>
           </div>
         `;
 
         activitiesList.appendChild(activityCard);
 
-        // Add option to select dropdown
-        const option = document.createElement("option");
-        option.value = name;
-        option.textContent = name;
-        activitySelect.appendChild(option);
+        // Add delete event listeners
+        activityCard.querySelectorAll('.delete-btn').forEach(btn => {
+          btn.addEventListener('click', async (e) => {
+            const activity = e.target.dataset.activity;
+            const email = e.target.dataset.email;
+            try {
+              const response = await fetch(`/activities/${encodeURIComponent(activity)}/unregister?email=${encodeURIComponent(email)}`, {
+                method: 'DELETE'
+              });
+              if (response.ok) {
+                fetchActivities(); // Refresh activities
+              } else {
+                const result = await response.json();
+                alert(result.detail || 'Failed to unregister');
+              }
+            } catch (error) {
+              console.error('Error unregistering:', error);
+              alert('Failed to unregister. Please try again.');
+            }
+          });
+        });
       });
     } catch (error) {
       activitiesList.innerHTML = "<p>Failed to load activities. Please try again later.</p>";

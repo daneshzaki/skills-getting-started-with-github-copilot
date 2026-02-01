@@ -41,5 +41,18 @@ def signup(activity):
     activities[activity]['participants'].append(email)
     return jsonify({"message": f"Signed up for {activity}"})
 
+@app.route('/activities/<activity>/unregister', methods=['DELETE'])
+def unregister(activity):
+    activity = unquote(activity)
+    email = request.args.get('email')
+    if not email:
+        return jsonify({"detail": "Email required"}), 400
+    if activity not in activities:
+        return jsonify({"detail": "Activity not found"}), 404
+    if email not in activities[activity]['participants']:
+        return jsonify({"detail": "Not signed up"}), 400
+    activities[activity]['participants'].remove(email)
+    return jsonify({"message": f"Unregistered from {activity}"})
+
 if __name__ == '__main__':
     app.run(debug=True)
